@@ -70,4 +70,7 @@ export const REVIEWS = [
   { n: 'मयुरी शिंदे', c: '#0891b2', w: '३ महिन्यांपूर्वी', t: 'सुलेखनाचं काम अतिशय सुंदर. प्रत्येक अक्षर कलात्मक.' },
 ]
 
+// Latest Instagram posts from the backend; empty means the section falls back to portfolio posters.
+export const INSTAGRAM = []
+
 export const MARQUEE = ['फ्लेक्स बॅनर', 'लग्नपत्रिका', 'लोगो डिझाइन', 'सुलेखन', 'राजकीय प्रचार', 'सोशल मीडिया', 'ऑफसेट प्रिंटिंग']

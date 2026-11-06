@@ -1,17 +1,47 @@
 // Small, mostly static sections.
+import { useEffect, useState } from 'react'
 import { MARQUEE, STATS, REVIEWS } from '../data'
 import { SITE, waLink } from '../config'
+import { getLenis, lockScroll } from '../lib/motion'
 import { Magnetic, WhatsAppIcon } from './ui'
 
+const LINKS = [['services', 'सेवा'], ['work', 'आमचे काम'], ['order', 'ऑर्डर'], ['reviews', 'रिव्ह्यू'], ['instagram', 'इन्स्टाग्राम'], ['contact', 'संपर्क']]
+
 export function Nav() {
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    lockScroll(true)
+    const esc = (e) => e.key === 'Escape' && setOpen(false)
+    addEventListener('keydown', esc)
+    return () => { lockScroll(false); removeEventListener('keydown', esc) }
+  }, [open])
+
+  // scrolling is locked while the menu is open, so close it first and jump once scrolling is back
+  const go = (e, id) => {
+    e.preventDefault()
+    setOpen(false)
+    setTimeout(() => {
+      const el = document.getElementById(id)
+      getLenis() ? getLenis().scrollTo(el) : el.scrollIntoView()
+    }, 80)
+  }
+
   return (
-    <nav className="nav" aria-label="मुख्य">
-      <a href="#top" className="logo"><b>ईश्वरी</b>Graphics</a>
-      <ul>
-        <li><a href="#services">सेवा</a></li><li><a href="#work">आमचे काम</a></li>
-        <li><a href="#order">ऑर्डर</a></li><li><a href="#reviews">रिव्ह्यू</a></li><li><a href="#contact">संपर्क</a></li>
-      </ul>
-    </nav>
+    <>
+      <nav className="nav" aria-label="मुख्य">
+        <a href="#top" className="logo"><b>ईश्वरी</b>Graphics</a>
+        <ul>{LINKS.slice(0, 4).concat(LINKS.slice(5)).map(([id, t]) => <li key={id}><a href={`#${id}`}>{t}</a></li>)}</ul>
+        <button className="menu-btn" aria-expanded={open} aria-controls="menu" aria-label={open ? 'मेनू बंद करा' : 'मेनू उघडा'} onClick={() => setOpen(!open)}>
+          <span /><span />
+        </button>
+      </nav>
+      <div id="menu" className={`menu${open ? ' open' : ''}`}>
+        {LINKS.map(([id, t]) => <a key={id} href={`#${id}`} onClick={(e) => go(e, id)}>{t}</a>)}
+        <a className="btn btn-main" href={waLink()} target="_blank" rel="noopener">WhatsApp वर बोला</a>
+      </div>
+    </>
   )
 }
 

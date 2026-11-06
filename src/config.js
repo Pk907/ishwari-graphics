@@ -10,6 +10,7 @@ export const SITE = {
   rating: '4.9', // TODO: real Google rating
   reviewCount: '120+', // TODO: real review count
   mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Ishwari+Graphics+And+Advertising',
+  priceNote: '* नमुना दर. अंतिम दर आकार, संख्या आणि कागदानुसार ठरतो.',
   instagram: 'https://www.instagram.com/ishwari_graphics/',
 }
 

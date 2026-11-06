@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { PRICES, STEPS } from '../data'
-import { waLink } from '../config'
+import { SITE, waLink } from '../config'
 import { Magnetic, SecHead, Arrow } from './ui'
 
 const EMPTY = { svc: PRICES[0].v, name: '', phone: '', qty: '', date: '', town: '', del: 'दुकानातून घेईन', details: '' }
@@ -42,7 +42,7 @@ export default function Order() {
               <span className="pk"><b>{p.v}</b><small>{p.p}</small></span>
             </label>
           ))}
-          <p>* नमुना दर. अंतिम दर आकार, संख्या आणि कागदानुसार ठरतो.</p>
+          <p>{SITE.priceNote}</p>
         </div>
         <form className="form" onSubmit={submit}>
           <div className="row">

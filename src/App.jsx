@@ -7,6 +7,7 @@ import Services from './components/Services'
 import Portfolio from './components/Portfolio'
 import Order from './components/Order'
 import Cursor from './components/Cursor'
+import Instagram from './components/Instagram'
 import { Nav, Marquee, Stats, Reviews, Contact, Footer, WhatsAppFab } from './components/Sections'
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
         <Portfolio />
         <Order />
         <Reviews />
+        <Instagram />
         <Contact />
       </main>
       <Footer />

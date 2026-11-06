@@ -3,6 +3,7 @@ import { gsap, useGSAP, reduced, finePointer } from '../lib/motion'
 
 // Placeholder artwork drawn in CSS. Swap for <img> once the studio's real work is in.
 export function Poster({ p, ratio, className = '' }) {
+  if (p.img) return <div className={`poster p-img ${className}`} style={{ aspectRatio: ratio ?? p.r }}><img src={p.img} alt={p.t} loading="lazy" decoding="async" /></div>
   return (
     <div className={`poster v-${p.v} ${className}`} style={{ '--bg': p.bg, '--fg': p.fg, '--ac': p.ac, aspectRatio: ratio ?? p.r }}>
       <span className="p-top">{p.tag}</span>
@@ -39,6 +40,14 @@ export const Arrow = icon('M5 12h14M13 6l6 6-6 6')
 export const Prev = icon('M15 6l-6 6 6 6')
 export const Next = icon('M9 6l6 6-6 6')
 export const Close = icon('M6 6l12 12M18 6L6 18')
+
+export function InstagramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r=".6" fill="currentColor" />
+    </svg>
+  )
+}
 
 export function WhatsAppIcon() {
   return (

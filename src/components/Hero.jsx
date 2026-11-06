@@ -68,7 +68,7 @@ export default function Hero({ ready }) {
         </div>
       </div>
       <div className="stack" aria-hidden="true">
-        {STACK.map((i) => <div className="layer" key={i}><Poster p={WORK[i]} /></div>)}
+        {STACK.map((i) => <div className="layer" key={i}><Poster p={WORK[i % WORK.length]} /></div>)}
       </div>
       <a href="#services" className="badge" aria-label="सेवांकडे जा">
         <svg viewBox="0 0 100 100" aria-hidden="true">

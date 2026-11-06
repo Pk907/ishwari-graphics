@@ -44,7 +44,7 @@ const DEMOS = {
   phone: () => (
     <div className="demo d-phone" aria-hidden="true">
       <div className="phone"><div className="feed">
-        {[2, 7, 3, 13, 2, 7, 3, 13].map((i, n) => <Poster key={n} p={WORK[i]} ratio="1/1" />)}
+        {[2, 7, 3, 13, 2, 7, 3, 13].map((i, n) => <Poster key={n} p={WORK[i % WORK.length]} ratio="1/1" />)}
       </div></div>
     </div>
   ),
@@ -67,19 +67,19 @@ export default function Services() {
 
   return (
     <section className="services" id="services" ref={ref}>
-      <SecHead title={['आम्ही काय', 'बनवतो']} sup="05"><p>प्रत्येक सेवा एक छोटा प्रयोग आहे. hover करा, ओढा, क्लिक करा.</p></SecHead>
+      <SecHead title={['आम्ही काय', 'बनवतो']} sup={String(SERVICES.length).padStart(2, '0')}><p>प्रत्येक सेवा एक छोटा प्रयोग आहे. hover करा, ओढा, क्लिक करा.</p></SecHead>
       <div className="s-track" ref={track}>
         {SERVICES.map((s, i) => {
           const Demo = DEMOS[s.id]
           return (
-            <article className="s-panel" key={s.id} style={{ '--c': s.c }}>
+            <article className="s-panel" key={i} style={{ '--c': s.c }}>
               <div>
-                <span className="num">0{i + 1} / 05</span>
+                <span className="num">0{i + 1} / 0{SERVICES.length}</span>
                 <h3>{s.title[0]}<br />{s.title[1]}</h3>
                 <span className="en">{s.en}</span>
                 <ul>{s.items.map((t) => <li key={t}>{t}</li>)}</ul>
               </div>
-              <Demo />
+              {Demo && <Demo />}
             </article>
           )
         })}
