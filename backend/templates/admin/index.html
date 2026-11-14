@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block coltype %}colMS{% endblock %}
+{% block content %}
+<div id="content-main" class="home">
+  <p class="hello">Welcome back. What would you like to update?</p>
+  <div class="cards"><section class="card card-manager"><h2>Business Manager</h2><p class="card-sub">Orders, vendors, payments and profit</p><div class="acts"><a class="primary" href="http://localhost:5173/#/manager">Open</a></div></section></div>
+  {% for app in app_list %}
+  <div class="cards">
+    {% for m in app.models %}
+    <section class="card card-{{ m.object_name|lower }}">
+      <h2>{{ m.name }}</h2>
+      <div class="acts">
+        {% if m.add_url %}<a class="primary" href="{{ m.add_url }}">+ Add</a>{% endif %}
+        {% if m.admin_url %}<a href="{{ m.admin_url }}">{% if m.add_url %}Edit / list{% else %}View{% endif %}</a>{% endif %}
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block sidebar %}{% endblock %}

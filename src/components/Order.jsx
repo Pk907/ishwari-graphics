@@ -1,7 +1,10 @@
-import { useState } from 'react'
-import { PRICES, STEPS } from '../data'
+import { useEffect, useState } from 'react'
+import { PRICES } from '../data'
 import { SITE, waLink } from '../config'
-import { Magnetic, SecHead, Arrow } from './ui'
+import { Magnetic, Arrow } from './ui'
+import { lockScroll } from '../lib/motion'
+
+export const openOrder = () => dispatchEvent(new Event('open-order'))
 
 const EMPTY = { svc: PRICES[0].v, name: '', phone: '', qty: '', date: '', town: '', del: 'दुकानातून घेईन', details: '' }
 
@@ -23,17 +26,33 @@ function orderText(f) {
 export default function Order() {
   const [f, setF] = useState(EMPTY)
   const [files, setFiles] = useState(0)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const show = () => setOpen(true)
+    addEventListener('open-order', show)
+    return () => removeEventListener('open-order', show)
+  }, [])
+
+  useEffect(() => {
+    if (!open) return
+    lockScroll(true)
+    const esc = (e) => e.key === 'Escape' && setOpen(false)
+    addEventListener('keydown', esc)
+    return () => { lockScroll(false); removeEventListener('keydown', esc) }
+  }, [open])
+
   const set = (e) => setF({ ...f, [e.target.name]: e.target.value })
   const submit = (e) => { e.preventDefault(); window.open(waLink(orderText(f)), '_blank', 'noopener') }
 
+  if (!open) return null
+
   return (
-    <section className="order" id="order">
-      <SecHead title={['ऑर्डर', 'बुक करा']}>
-        <p>सेवा निवडा, माहिती भरा आणि ऑर्डर थेट WhatsApp वर पाठवा. तुमच्या मंजुरीशिवाय प्रिंटिंग होत नाही.</p>
-      </SecHead>
-      <div className="steps">
-        {STEPS.map((s, i) => <div className="step" key={s.b}><i>0{i + 1}</i><b>{s.b}</b><p>{s.p}</p></div>)}
-      </div>
+    <div className="modal" onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}>
+      <div className="modal-card" role="dialog" aria-modal="true" aria-label="ऑर्डर बुक करा" data-lenis-prevent>
+        <button className="modal-x" type="button" aria-label="बंद करा" onClick={() => setOpen(false)}>×</button>
+        <h2>ऑर्डर बुक करा</h2>
+        <p className="modal-sub">सेवा निवडा, माहिती भरा आणि ऑर्डर थेट WhatsApp वर पाठवा. तुमच्या मंजुरीशिवाय प्रिंटिंग होत नाही.</p>
       <div className="book">
         <div className="picks" role="radiogroup" aria-label="सेवा निवडा">
           {PRICES.map((p) => (
@@ -68,6 +87,7 @@ export default function Order() {
           <Magnetic as="button" className="btn btn-main" type="submit" style={{ justifySelf: 'start' }}>WhatsApp वर ऑर्डर पाठवा <Arrow /></Magnetic>
         </form>
       </div>
-    </section>
+      </div>
+    </div>
   )
 }

@@ -1,0 +1,57 @@
+/* Simple premium skin over Django admin: warm paper, ink header, one accent. */
+:root, html[data-theme="light"] {
+  --primary: #1a1612; --secondary: #1a1612; --accent: #d94a1e;
+  --primary-fg: #fff; --body-bg: #f6f2ec; --body-fg: #1a1612; --body-quiet-color: #6b6258;
+  --header-bg: #1a1612; --header-color: #f6f2ec; --header-branding-color: #fff; --header-link-color: #f6f2ec;
+  --breadcrumbs-bg: transparent; --breadcrumbs-fg: #6b6258; --breadcrumbs-link-fg: #1a1612;
+  --link-fg: #b8340f; --link-hover-color: #d94a1e; --link-selected-fg: #d94a1e;
+  --button-bg: #d94a1e; --button-hover-bg: #b8340f; --default-button-bg: #1a1612; --default-button-hover-bg: #000;
+  --darkened-bg: #efe9e0; --selected-bg: #fbe9e2; --border-color: #e4dccf; --hairline-color: #ece5d9;
+  --object-tools-bg: #1a1612; --object-tools-hover-bg: #d94a1e; --message-success-bg: #e3f3e6;
+  --font-family-primary: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+body { font-size: 15px }
+#header { padding: 14px 32px; height: auto; box-shadow: 0 1px 0 rgba(255,255,255,.08) }
+#site-name a { font-size: 1.35rem; font-weight: 600; letter-spacing: .01em }
+#site-name b { color: #ff7a4d }
+.view-site { color: #f6f2ec; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: 6px 14px; font-size: .85rem; text-decoration: none }
+.view-site:hover { background: #d94a1e; border-color: #d94a1e; color: #fff }
+div.breadcrumbs { padding: 14px 32px; font-size: .85rem }
+#content { padding: 24px 32px }
+#content h1 { font-size: 1.7rem; font-weight: 600 }
+.module, .inline-group { border-radius: 14px; border: 1px solid var(--border-color); background: #fff; overflow: hidden; box-shadow: 0 1px 2px rgba(40,30,20,.05) }
+.module h2, .module caption, .inline-group h2 { background: #1a1612; font-weight: 500; letter-spacing: .02em }
+#changelist .paginator, #changelist-filter { border-radius: 12px }
+#changelist-filter { background: #fff; border: 1px solid var(--border-color) }
+table { border-radius: 12px }
+tr:hover td { background: #fbf8f3 }
+input[type=text], input[type=url], input[type=number], input[type=password], input[type=email], textarea, select {
+  border: 1px solid #d8cfc0; border-radius: 8px; padding: 8px 10px; background: #fff }
+input:focus, textarea:focus, select:focus { outline: none; border-color: #d94a1e; box-shadow: 0 0 0 3px rgba(217,74,30,.15) }
+.button, input[type=submit], input[type=button], .submit-row input, a.button { border-radius: 999px; padding: 10px 20px; font-weight: 500 }
+.submit-row { border-radius: 14px; border: 1px solid var(--border-color); background: #fff; padding: 14px 18px }
+.object-tools a { border-radius: 999px; padding: 8px 16px }
+.help { font-size: .82rem }
+form .aligned label { font-weight: 500 }
+
+/* dashboard */
+.dashboard #content { max-width: 1100px; margin: 0 auto }
+.hello { font-size: 1.5rem; font-weight: 600; margin: 8px 0 24px }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px }
+.card { background: #fff; border: 1px solid var(--border-color); border-radius: 16px; padding: 22px; display: grid; gap: 18px; transition: transform .2s, box-shadow .2s }
+.card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(40,30,20,.1) }
+.card h2 { margin: 0; font-size: 1.1rem; font-weight: 600; text-transform: capitalize }
+.card::before { content: "▣"; font-size: 1.4rem; color: #d94a1e }
+.card-poster::before { content: "🖼" } .card-service::before { content: "🛠" } .card-review::before { content: "⭐" }
+.card-price::before { content: "₹" ; font-weight: 700 } .card-sitesettings::before { content: "⚙" } .card-stat::before { content: "📊" }
+.card-step::before { content: "🪜" } .card-instagrampost::before { content: "📷" }
+.card-user::before { content: "👤" } .card-group::before { content: "👥" }
+.acts { display: flex; gap: 8px; flex-wrap: wrap }
+.acts a { padding: 8px 14px; border-radius: 999px; border: 1px solid #d8cfc0; color: #1a1612; text-decoration: none; font-size: .88rem; font-weight: 500 }
+.acts a:hover { border-color: #1a1612 }
+.acts a.primary { background: #1a1612; color: #fff; border-color: #1a1612 }
+.acts a.primary:hover { background: #d94a1e; border-color: #d94a1e }
+@media (max-width: 767px) { #header, #content, div.breadcrumbs { padding-left: 16px; padding-right: 16px } .view-site { display: none } }
+
+.card-manager::before { content: "💼" } .card-sub { margin: -10px 0 0; font-size: .85rem; color: #6b6258 }
+.dashboard .cards + .cards { margin-top: 16px }

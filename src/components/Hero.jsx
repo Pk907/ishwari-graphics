@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { gsap, useGSAP, reduced, finePointer } from '../lib/motion'
 import { WORK, C } from '../data'
 import { Poster, Magnetic, Arrow } from './ui'
+import { openOrder } from './Order'
 
 const STACK = [0, 4, 1, 7, 2]
 const SWAPS = [['रंग.', C.saf], ['आकार.', C.mag], ['ओळख.', C.blue], ['उठाव.', C.green]]
@@ -63,7 +64,7 @@ export default function Hero({ ready }) {
           <span className="deva">कल्पना ते प्रिंटिंग</span>
         </div>
         <div className="ctas">
-          <Magnetic className="btn btn-main" href="#order">ऑर्डर बुक करा <Arrow /></Magnetic>
+          <Magnetic as="button" className="btn btn-main" onClick={openOrder}>ऑर्डर बुक करा <Arrow /></Magnetic>
           <Magnetic className="btn btn-ghost" href="#work">आमचे काम पहा</Magnetic>
         </div>
       </div>

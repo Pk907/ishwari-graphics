@@ -25,11 +25,11 @@ export default function App() {
         <Stats />
         <Services />
         <Portfolio />
-        <Order />
         <Reviews />
         <Instagram />
         <Contact />
       </main>
+      <Order />
       <Footer />
       <WhatsAppFab />
     </MotionConfig>
