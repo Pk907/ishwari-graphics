@@ -7,7 +7,10 @@ threads = int(os.environ.get('GUNICORN_THREADS', '4'))
 timeout = int(os.environ.get('GUNICORN_TIMEOUT', '60'))
 keepalive = int(os.environ.get('GUNICORN_KEEPALIVE', '2'))
 
-# Logging to stdout/stderr for Render logs
+# Logging configuration for Render runtime logs
+# accesslog '-' writes HTTP requests to stdout
+# errorlog '-' writes Gunicorn server & worker exceptions to stderr
 accesslog = '-'
 errorlog = '-'
+loglevel = os.environ.get('GUNICORN_LOG_LEVEL', 'info')
 capture_output = True
