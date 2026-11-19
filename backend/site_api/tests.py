@@ -42,3 +42,37 @@ class SyncInstagramTests(TestCase):
             call_command('sync_instagram')
             self.assertEqual(InstagramPost.objects.count(), 1)
             self.assertEqual(self.client.get('/api/site/').json()['instagram'][0]['caption'], 'hello')
+
+
+class SupabaseStorageTests(TestCase):
+    def test_storage_url_generation(self):
+        from .storage import SupabaseStorage
+        storage = SupabaseStorage(
+            supabase_url='https://testproject.supabase.co',
+            service_role_key='test-secret-key',
+            bucket='django-media'
+        )
+        url = storage.url('posters/sample.jpg')
+        self.assertEqual(
+            url,
+            'https://testproject.supabase.co/storage/v1/object/public/django-media/posters/sample.jpg'
+        )
+        # Ensure secret key is never part of public URL
+        self.assertNotIn('test-secret-key', url)
+
+    def test_storage_normalization_and_collision_prevention(self):
+        from .storage import SupabaseStorage
+        storage = SupabaseStorage(
+            supabase_url='https://testproject.supabase.co',
+            service_role_key='test-secret-key',
+            bucket='django-media'
+        )
+        # Verify Windows backslashes normalize to POSIX forward slashes
+        self.assertEqual(storage._normalize_name(r'posters\test.png'), 'posters/test.png')
+
+        # Test collision handling using mock exists
+        with mock.patch.object(storage, 'exists', side_effect=lambda name: name == 'posters/test.png'):
+            new_name = storage.get_available_name('posters/test.png')
+            self.assertEqual(new_name, 'posters/test_1.png')
+
+

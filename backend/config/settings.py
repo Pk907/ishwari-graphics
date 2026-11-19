@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 import os
 from pathlib import Path
+import django
 import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -183,9 +184,20 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_ROOT.mkdir(parents=True, exist_ok=True)
 
+# Supabase Storage Configuration for persistent media uploads
+SUPABASE_URL = os.environ.get('SUPABASE_URL', os.environ.get('VITE_SUPABASE_URL', '')).rstrip('/')
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '').strip()
+SUPABASE_MEDIA_BUCKET = os.environ.get('SUPABASE_MEDIA_BUCKET', 'django-media').strip()
+
+default_storage_backend = (
+    "site_api.storage.SupabaseStorage"
+    if (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY)
+    else "django.core.files.storage.FileSystemStorage"
+)
+
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": default_storage_backend,
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -210,11 +222,14 @@ email_backend = os.environ.get(
     'DJANGO_EMAIL_BACKEND',
     'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
 )
-MAILERS = {
-    'default': {
-        'BACKEND': email_backend,
-    },
-}
+if django.VERSION >= (6, 0):
+    MAILERS = {
+        'default': {
+            'BACKEND': email_backend,
+        },
+    }
+else:
+    EMAIL_BACKEND = email_backend
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
