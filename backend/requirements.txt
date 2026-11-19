@@ -1,2 +1,7 @@
 Django>=6.1
 Pillow
+gunicorn>=23.0.0
+psycopg2-binary>=2.9.10
+dj-database-url>=3.0.0
+whitenoise>=6.8.0
+django-cors-headers>=4.7.0

@@ -4,10 +4,11 @@ import { useConfirm } from './ui.jsx'
 import Dashboard from './Dashboard.jsx'
 import Orders from './Orders.jsx'
 import Transactions from './Transactions.jsx'
+import PortfolioImages from './PortfolioImages.jsx'
 import { Customers, Vendors } from './Parties.jsx'
 import './manager.css'
 
-const TABS = [['dashboard', 'Dashboard', Dashboard], ['orders', 'Orders', Orders], ['customers', 'Customers', Customers], ['vendors', 'Vendors', Vendors], ['transactions', 'Transactions', Transactions]]
+const TABS = [['dashboard', 'Dashboard', Dashboard], ['orders', 'Orders', Orders], ['customers', 'Customers', Customers], ['vendors', 'Vendors', Vendors], ['transactions', 'Transactions', Transactions], ['portfolio', 'Portfolio images', PortfolioImages]]
 const tabFromHash = () => TABS.find(([id]) => location.hash === `#/manager/${id}`)?.[0] || 'dashboard'
 
 export default function Manager() {
@@ -37,7 +38,7 @@ export default function Manager() {
           <a href="/admin/" className="mg-link">← Admin</a>
         </div>
       </aside>
-      <main className="mg-main"><View state={state} dispatch={dispatch} /></main>
+      <main className="mg-main"><View state={state} dispatch={dispatch} ask={ask} /></main>
       {confirm}
     </div>
   )

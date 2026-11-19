@@ -4,7 +4,10 @@
 {% block content %}
 <div id="content-main" class="home">
   <p class="hello">Welcome back. What would you like to update?</p>
-  <div class="cards"><section class="card card-manager"><h2>Business Manager</h2><p class="card-sub">Orders, vendors, payments and profit</p><div class="acts"><a class="primary" href="http://localhost:5173/#/manager">Open</a></div></section></div>
+  <div class="cards">
+    <section class="card card-manager"><h2>Business Manager</h2><p class="card-sub">Orders, vendors, payments and profit</p><div class="acts"><a class="primary" href="{{ public_site_url }}/#/manager">Open</a></div></section>
+    <section class="card card-portfolio"><h2>Portfolio images</h2><p class="card-sub">Upload, preview and organize public portfolio work</p><div class="acts"><a class="primary" href="{{ public_site_url }}/#/manager/portfolio">Open</a></div></section>
+  </div>
   {% for app in app_list %}
   <div class="cards">
     {% for m in app.models %}

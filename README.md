@@ -36,6 +36,17 @@ Motion respects `prefers-reduced-motion`; the cursor and magnetic buttons only r
 
 Orders are sent as a prefilled WhatsApp message. Files can't be attached through a WhatsApp link, so customers send them in the chat. Uploading files on the site needs a small backend (for example a serverless function plus storage).
 
+## Portfolio image storage
+
+The portfolio editor in the Business Manager uses the existing Supabase `portfolio_images` table and `portfolio-images` bucket. It does not create or migrate database objects.
+
+1. Copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from the Supabase project’s public client settings. Restart Vite after changing the file.
+2. Sign in to the Portfolio images tab with a Supabase Auth account whose UUID has `role = 'admin'` in `public.profiles`. Admin access is checked through the existing `public.is_admin()` function.
+3. Ensure the existing RLS policies permit public reads only for visible portfolio records and allow storage/table writes and deletes only when `public.is_admin()` is true. The bucket must allow public image reads for website display.
+
+The browser uses only the project URL and anon/publishable key. Never put a `service_role` key in frontend code or Vite environment variables.
+For Django deployments where the React site is not at `http://localhost:5173`, set the backend environment variable `PUBLIC_SITE_URL` to the React site’s origin so the `/admin/` dashboard links open the right site.
+
 ## Instagram sync
 
 The Instagram section shows posts from the admin (Instagram posts). To fill it automatically:

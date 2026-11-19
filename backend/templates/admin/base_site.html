@@ -3,4 +3,4 @@
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Ishwari Graphics{% endblock %}
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin_theme/theme.css' %}">{% endblock %}
 {% block branding %}<h1 id="site-name"><a href="{% url 'admin:index' %}"><b>ईश्वरी</b> Graphics</a></h1>{% endblock %}
-{% block nav-global %}<a class="view-site" href="http://localhost:5173/" target="_blank" rel="noopener">View website ↗</a>{% endblock %}
+{% block nav-global %}<a class="view-site" href="{{ public_site_url }}/" target="_blank" rel="noopener">View website ↗</a>{% endblock %}

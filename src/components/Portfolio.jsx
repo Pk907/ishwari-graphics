@@ -6,6 +6,7 @@ import { lockScroll, ScrollTrigger } from '../lib/motion'
 import { Poster, SecHead, Close, Prev, Next } from './ui'
 
 const CATS = ['All', ...new Set(WORK.map((w) => w.cat))]
+const categoryName = (category) => LABEL[category] || category
 // capitalised aliases so the lint config (no React JSX plugin) sees them as used
 const MDiv = motion.div, MButton = motion.button
 const ease = [0.2, 0.7, 0.2, 1]
@@ -44,9 +45,10 @@ function Lightbox({ index, list, onClose, onGo }) {
         </MDiv>
       </div>
       <div className="lb-info">
-        <span className="cat">{LABEL[w.cat]} · {w.tag}</span>
+        <span className="cat">{categoryName(w.cat)}{w.tag && ` · ${w.tag}`}</span>
         <h3 id="lb-title">{w.t}</h3>
-        <p>येथे प्रकल्पाची माहिती येईल: क्लायंट, ब्रीफ, कागद, फिनिश आणि लागलेला वेळ.</p>
+        {w.description && <p>{w.description}</p>}
+        {!w.description && !w.img && <p>येथे प्रकल्पाची माहिती येईल: क्लायंट, ब्रीफ, कागद, फिनिश आणि लागलेला वेळ.</p>}
         <a className="btn btn-main" style={{ alignSelf: 'start' }} target="_blank" rel="noopener"
           href={waLink(`नमस्कार ईश्वरी ग्राफिक्स, मला "${w.t}" सारखे डिझाइन हवे आहे.`)}>असं डिझाइन हवंय</a>
         <div className="lb-nav">
@@ -74,7 +76,7 @@ export default function Portfolio() {
       <div className="filters" role="group" aria-label="कामाचा प्रकार निवडा">
         {CATS.map((c) => (
           <button key={c} aria-pressed={cat === c} onClick={() => setCat(c)}>
-            {LABEL[c]}<sup>{c === 'All' ? WORK.length : WORK.filter((w) => w.cat === c).length}</sup>
+            {categoryName(c)}<sup>{c === 'All' ? WORK.length : WORK.filter((w) => w.cat === c).length}</sup>
           </button>
         ))}
       </div>
@@ -85,7 +87,7 @@ export default function Portfolio() {
               initial={{ opacity: 0, y: 60 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }}
               exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.6, ease }}>
               <MDiv layoutId={`art-${i}`}><Poster p={WORK[i]} /></MDiv>
-              <span className="meta"><b>{WORK[i].t}</b><span>{LABEL[WORK[i].cat]}</span></span>
+              <span className="meta"><b>{WORK[i].t}</b><span>{categoryName(WORK[i].cat)}</span></span>
             </MButton>
           ))}
         </AnimatePresence>
