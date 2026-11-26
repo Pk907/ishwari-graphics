@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import InstagramPost, Poster, Price, Review, Service, SiteSettings, Stat, Step
+from .models import InstagramPost, Poster, Price, Receipt, Review, Service, SiteSettings, Stat, Step
 
 
 @admin.register(SiteSettings)
@@ -67,3 +67,19 @@ class InstagramPostAdmin(admin.ModelAdmin):
     @admin.display(description='Preview')
     def thumb(self, obj):
         return format_html('<img src="{}" style="height:60px;border-radius:4px">', obj.image.url) if obj.image else '-'
+
+
+@admin.register(Receipt)
+class ReceiptAdmin(admin.ModelAdmin):
+    """Read-only list; receipts are created from the Business Manager and downloaded there."""
+    list_display = ['__str__', 'order', 'created_at']
+    readonly_fields = ['order', 'pdf', 'created_at']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False  # receipts are permanent records

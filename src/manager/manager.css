@@ -22,6 +22,8 @@ body.mg-body::after { display: none }
 .mg-btn.main { background: var(--ink); color: var(--paper); border-color: var(--ink) }
 .mg-btn.main:hover { background: var(--acc); border-color: var(--acc) }
 .mg-btn.danger { background: #b3261e; color: #fff; border-color: #b3261e }
+.mg-btn:disabled { opacity: .45; cursor: not-allowed }
+.mg-banner { margin-bottom: 14px; padding: 10px 14px; background: #fdecea; border-radius: 10px }
 .mg-link { color: var(--acc); font-weight: 600; padding: 4px 6px; text-align: left }
 .mg-link:hover { text-decoration: underline }
 .mg-link.danger { color: #b3261e }

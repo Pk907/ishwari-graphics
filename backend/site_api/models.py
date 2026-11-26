@@ -120,3 +120,110 @@ class Stat(Ordered):
 
     def __str__(self):
         return f'{self.value}{self.suffix} {self.label}'
+
+
+# ---- Business Manager (orders and money). Amounts are whole rupees, like the Manager UI. ----
+
+class Party(models.Model):
+    name = models.CharField(max_length=120)
+    phone = models.CharField(max_length=20, blank=True)
+    address = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        abstract = True
+        ordering = ['id']
+
+    def __str__(self):
+        return self.name
+
+
+class Customer(Party):
+    pass
+
+
+class Vendor(Party):
+    pass
+
+
+class Order(models.Model):
+    STATUSES = [(s, s) for s in ['Pending', 'Designing', 'Sent for Printing', 'Completed', 'Delivered']]
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name='orders')
+    desc = models.CharField('description', max_length=200)
+    design = models.PositiveIntegerField('design charges', default=0)
+    printing = models.PositiveIntegerField('printing charges', default=0)
+    discount = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=STATUSES, default='Pending')
+    vendor = models.ForeignKey(Vendor, on_delete=models.PROTECT, null=True, blank=True, related_name='orders')
+    cost = models.PositiveIntegerField('vendor printing cost', default=0)
+    date = models.DateField(default=timezone.localdate)
+    # set by "Mark as paid" once payments cover the total; cleared if the balance reopens
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['id']
+
+    @property
+    def total(self):
+        return self.design + self.printing - self.discount
+
+    def received(self):
+        return self.transactions.filter(type='customer_payment').aggregate(s=models.Sum('amount'))['s'] or 0
+
+    def clean(self):
+        if self.discount > self.design + self.printing:
+            raise ValidationError('Discount is more than the order amount.')
+
+    def __str__(self):
+        return f'ORD-{1000 + (self.pk or 0)}'
+
+
+class Transaction(models.Model):
+    TYPES = [('customer_payment', 'Customer payment'), ('vendor_payment', 'Vendor payment'), ('expense', 'Expense')]
+    type = models.CharField(max_length=20, choices=TYPES)
+    date = models.DateField(default=timezone.localdate)
+    amount = models.PositiveIntegerField()
+    method = models.CharField(max_length=20, blank=True)
+    reference = models.CharField(max_length=60, blank=True, help_text='UPI / bank transaction ID')
+    note = models.CharField(max_length=200, blank=True)
+    category = models.CharField(max_length=40, blank=True)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, null=True, blank=True, related_name='transactions')
+    vendor = models.ForeignKey(Vendor, on_delete=models.PROTECT, null=True, blank=True, related_name='transactions')
+
+    class Meta:
+        ordering = ['id']
+
+    def clean(self):
+        if self.type != 'expense' and not self.order_id:
+            raise ValidationError('Payments must be linked to an order.')
+        if not self.amount:
+            raise ValidationError('Amount must be more than zero.')
+
+    def __str__(self):
+        return f'{self.get_type_display()} {self.amount}'
+
+
+def receipt_storage():
+    # receipts are private: a non-public Supabase bucket in production, a folder outside MEDIA_ROOT locally
+    from django.conf import settings
+    from django.core.files.storage import FileSystemStorage
+    from .storage import SupabaseStorage
+    if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY:
+        return SupabaseStorage(bucket=settings.SUPABASE_RECEIPT_BUCKET, public=False)
+    return FileSystemStorage(location=settings.BASE_DIR / 'private')
+
+
+class Receipt(models.Model):
+    """One payment receipt per fully paid order; the unique order link is what stops duplicates."""
+    order = models.OneToOneField(Order, on_delete=models.PROTECT, related_name='receipt')
+    pdf = models.FileField(upload_to='receipts/', storage=receipt_storage, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-id']
+
+    @property
+    def number(self):
+        return f'IGR-{timezone.localtime(self.created_at):%Y}-{self.pk:05d}'
+
+    def __str__(self):
+        return self.number

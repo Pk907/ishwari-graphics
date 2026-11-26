@@ -1,10 +1,11 @@
 // All money maths lives here. Every rupee is a row in `transactions`; nothing is stored twice, so nothing can be counted twice.
 export const sum = (rows, f) => rows.reduce((s, r) => s + f(r), 0)
 export const inRange = (d, r) => (!r.from || d >= r.from) && (!r.to || d <= r.to)
+export const orderTotal = (o) => o.design + o.print - (o.discount || 0)
 
 // order id -> { total, paid, balance, cost, vendorPaid, vendorDue }
 export function figures({ orders, transactions }) {
-  const m = new Map(orders.map((o) => [o.id, { total: o.design + o.print, paid: 0, cost: o.cost, vendorPaid: 0 }]))
+  const m = new Map(orders.map((o) => [o.id, { total: orderTotal(o), paid: 0, cost: o.cost, vendorPaid: 0 }]))
   for (const t of transactions) {
     const f = m.get(t.orderId)
     if (!f) continue
@@ -20,7 +21,7 @@ export function summary(state, range) {
   const fig = [...figures(state).values()]
   const tx = state.transactions.filter((t) => inRange(t.date, range))
   const orders = state.orders.filter((o) => inRange(o.date, range))
-  const revenue = sum(orders, (o) => o.design + o.print)
+  const revenue = sum(orders, orderTotal)
   const printing = sum(orders, (o) => o.cost)
   const other = sum(tx.filter((t) => t.type === 'expense'), (t) => t.amount)
   return {

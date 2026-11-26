@@ -1,4 +1,4 @@
-// Realistic mock data. Rows are plain objects shaped like future DB tables (customers, vendors, orders, transactions).
+// Shared lists, plus a realistic sample dataset (seed) used by accounting.check.mjs. Live rows come from the Django API in the same shape.
 // Customer payments and vendor payments only ever live in `transactions`; order totals are derived from them (see accounting.js).
 export const STATUSES = ['Pending', 'Designing', 'Sent for Printing', 'Completed', 'Delivered']
 export const METHODS = ['Cash', 'UPI', 'Bank Transfer']

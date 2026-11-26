@@ -10,7 +10,7 @@ export const TYPES = { customer_payment: 'Customer payment', vendor_payment: 'Ve
 export function TxnForm({ state, dispatch, initial = {}, onDone }) {
   const fig = useMemo(() => figures(state), [state])
   const first = fig.get(initial.orderId) // opened from an order/vendor row: prefill what is still owed
-  const [f, setF] = useState({ type: 'customer_payment', date: today(), method: METHODS[0], amount: first ? (initial.type === 'vendor_payment' ? first.vendorDue : first.balance) : '', orderId: '', category: CATEGORIES[0], note: '', ...initial })
+  const [f, setF] = useState({ type: 'customer_payment', date: today(), method: METHODS[0], amount: first ? (initial.type === 'vendor_payment' ? first.vendorDue : first.balance) : '', orderId: '', category: CATEGORIES[0], note: '', reference: '', ...initial })
   const set = (e) => setF({ ...f, [e.target.name]: e.target.value })
   const isCust = f.type === 'customer_payment', isVendor = f.type === 'vendor_payment'
   const open = state.orders.filter((o) => (isCust ? fig.get(o.id).balance > 0 : o.vendorId && fig.get(o.id).vendorDue > 0) || o.id === initial.orderId)
@@ -28,7 +28,7 @@ export function TxnForm({ state, dispatch, initial = {}, onDone }) {
     e.preventDefault()
     const row = { type: f.type, date: f.date, method: f.method, amount: Number(f.amount), note: f.note }
     if (f.type === 'expense') row.category = f.category
-    else row.orderId = f.orderId
+    else Object.assign(row, { orderId: f.orderId, reference: f.reference })
     if (isVendor) row.vendorId = order.vendorId
     dispatch({ type: 'save', kind: 'transactions', row })
     onDone()
@@ -57,6 +57,7 @@ export function TxnForm({ state, dispatch, initial = {}, onDone }) {
         <Field label="Amount (₹)"><input name="amount" type="number" min="1" max={f.type === 'expense' ? undefined : due || undefined} step="1" value={f.amount} onChange={set} required /></Field>
         <Field label="Method"><select name="method" value={f.method} onChange={set}>{METHODS.map((m) => <option key={m}>{m}</option>)}</select></Field>
       </div>
+      {f.type !== 'expense' && <Field label="Transaction reference"><input name="reference" value={f.reference} onChange={set} maxLength="60" placeholder="UPI / bank reference (optional)" /></Field>}
       <div className="mg-row">
         <Field label="Date"><input name="date" type="date" value={f.date} onChange={set} required max={today()} /></Field>
         <Field label="Note"><input name="note" value={f.note} onChange={set} placeholder="Optional" /></Field>

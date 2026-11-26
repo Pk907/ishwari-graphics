@@ -14,9 +14,12 @@ import os
 from pathlib import Path
 import django
 import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR.parent / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -188,6 +191,10 @@ STATIC_ROOT.mkdir(parents=True, exist_ok=True)
 SUPABASE_URL = os.environ.get('SUPABASE_URL', os.environ.get('VITE_SUPABASE_URL', '')).rstrip('/')
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '').strip()
 SUPABASE_MEDIA_BUCKET = os.environ.get('SUPABASE_MEDIA_BUCKET', 'django-media').strip()
+# Private bucket for payment receipt PDFs (create it in Supabase as a non-public bucket, no policies needed)
+SUPABASE_RECEIPT_BUCKET = os.environ.get('SUPABASE_RECEIPT_BUCKET', 'invoices').strip()
+# Public key used only to ask Supabase whether a Manager sign-in token belongs to an admin
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', os.environ.get('VITE_SUPABASE_ANON_KEY', '')).strip()
 
 default_storage_backend = (
     "site_api.storage.SupabaseStorage"

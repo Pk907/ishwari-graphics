@@ -47,6 +47,16 @@ The portfolio editor in the Business Manager uses the existing Supabase `portfol
 The browser uses only the project URL and anon/publishable key. Never put a `service_role` key in frontend code or Vite environment variables.
 For Django deployments where the React site is not at `http://localhost:5173`, set the backend environment variable `PUBLIC_SITE_URL` to the React site’s origin so the `/admin/` dashboard links open the right site.
 
+## Business Manager data and payment receipts
+
+Customers, vendors, orders and transactions are stored in Django (`/api/manager/`). Every call must carry the signed-in Supabase admin's token, and the backend checks it with the same `public.is_admin()` function.
+
+1. Run `python manage.py migrate` in `backend/` to create the tables.
+2. In Supabase Storage, create a **private** bucket named `invoices` with no policies. Only the backend's `SUPABASE_SERVICE_ROLE_KEY` can read or write it. Set `SUPABASE_RECEIPT_BUCKET` to use another name. Without Supabase credentials, receipts are saved in `backend/private/`.
+3. The backend needs `SUPABASE_URL` and `SUPABASE_ANON_KEY` (it falls back to `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`) to verify admin sign-ins.
+
+Receipt workflow: open an order → record customer payments → **Mark as paid** (only allowed once the balance is ₹0) → **Generate bill (PDF)**. Each order gets one receipt (`IGR-<year>-<number>`). Clicking again downloads the same stored PDF. After a receipt is issued, the order's charges and customer payments are locked.
+
 ## Instagram sync
 
 The Instagram section shows posts from the admin (Instagram posts). To fill it automatically:

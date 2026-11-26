@@ -1,52 +1,49 @@
-import { useEffect, useReducer } from 'react'
-import { seed } from './data.js'
+import { useCallback, useEffect, useState } from 'react'
+import { getSupabaseClient } from '../lib/supabase.js'
 
-// Local state only. Each action maps to one future API call (save = upsert, remove = delete, addOrder = create order + customer + advance).
-// shortcut: persisted in localStorage so a refresh keeps edits; swap `load`/the effect for fetch calls when the backend lands.
-const KEY = 'manager-v1'
-const PREFIX = { orders: ['ORD-', 1001], customers: ['C-', 1], vendors: ['V-', 1], transactions: ['T-', 1] }
-
-export function nextId(state, kind) {
-  const [p, start] = PREFIX[kind]
-  const max = state[kind].reduce((m, r) => Math.max(m, Number(r.id.slice(p.length)) || 0), start - 1)
-  const n = max + 1
-  return p + (kind === 'orders' ? n : String(n).padStart(kind === 'transactions' ? 4 : 2, '0'))
+// Manager data lives in Django (/api/manager/), which checks the Supabase admin sign-in on every call.
+// Every write returns the full state, so the store just swaps it in; the views keep the same rows and actions as before.
+async function api(path, { method = 'GET', body } = {}) {
+  const { data } = await getSupabaseClient().auth.getSession()
+  const r = await fetch(`/api/manager/${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${data.session?.access_token || ''}`, ...(body && { 'Content-Type': 'application/json' }) },
+    body: body && JSON.stringify(body),
+  })
+  if (!r.ok) throw new Error((await r.json().catch(() => null))?.error || `Server error (${r.status}). Please try again.`)
+  return r
 }
 
-const upsert = (s, kind, row) => {
-  const id = row.id || nextId(s, kind)
-  const exists = s[kind].some((r) => r.id === id)
-  const saved = { ...row, id }
-  return { ...s, [kind]: exists ? s[kind].map((r) => (r.id === id ? saved : r)) : [...s[kind], saved] }
+function download(blob, name) {
+  const url = URL.createObjectURL(blob)
+  Object.assign(document.createElement('a'), { href: url, download: name }).click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
-
-function reducer(s, a) {
-  switch (a.type) {
-    case 'save': return upsert(s, a.kind, a.row)
-    case 'remove': {
-      const next = { ...s, [a.kind]: s[a.kind].filter((r) => r.id !== a.id) }
-      // an order's payments go with it so no orphan money is left in the totals
-      if (a.kind === 'orders') next.transactions = s.transactions.filter((t) => t.orderId !== a.id)
-      return next
-    }
-    case 'addOrder': {
-      let n = a.customer ? upsert(s, 'customers', a.customer) : s
-      const customerId = a.customer ? n.customers[n.customers.length - 1].id : a.order.customerId
-      n = upsert(n, 'orders', { ...a.order, customerId })
-      const orderId = n.orders[n.orders.length - 1].id
-      return a.advance?.amount > 0
-        ? upsert(n, 'transactions', { type: 'customer_payment', orderId, note: 'Advance', date: a.order.date, ...a.advance })
-        : n
-    }
-    case 'reset': return seed()
-    default: return s
-  }
-}
-
-const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || seed() } catch { return seed() } }
 
 export function useManager() {
-  const [state, dispatch] = useReducer(reducer, null, load)
-  useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(state)) } catch { /* private mode: state stays in memory */ } }, [state])
-  return [state, dispatch]
+  const [state, setState] = useState(null)
+  const [error, setError] = useState('')
+  const run = useCallback(async (path, opts) => {
+    try { setState(await (await api(path, opts)).json()); setError('') } catch (e) { setError(e.message) }
+  }, [])
+  useEffect(() => { run('') }, [run])
+
+  // save = upsert, remove = delete, addOrder = create order + new customer + advance in one server transaction.
+  const dispatch = useCallback(async (a) => {
+    switch (a.type) {
+      case 'save': return run(`${a.kind}/`, { method: 'POST', body: { row: a.row } })
+      case 'remove': return run(`${a.kind}/${a.id}/`, { method: 'DELETE' })
+      case 'addOrder': return run('orders/', { method: 'POST', body: { row: a.order, customer: a.customer, advance: a.advance } })
+      case 'markPaid': return run(`orders/${a.id}/paid/`, { method: 'POST' })
+      case 'receipt': // create: true makes the receipt (once, server-side); otherwise re-downloads the stored PDF
+        try {
+          const r = await api(`orders/${a.id}/receipt/`, { method: a.create ? 'POST' : 'GET' })
+          download(await r.blob(), r.headers.get('Content-Disposition')?.match(/filename="?([^"]+)"?/)?.[1] || `receipt-${a.id}.pdf`)
+          setError('')
+          if (a.create) await run('')
+        } catch (e) { setError(e.message) }
+    }
+  }, [run])
+
+  return [state, dispatch, error]
 }

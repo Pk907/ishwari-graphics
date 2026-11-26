@@ -39,7 +39,13 @@ class SupabaseStorage(Storage):
             or os.environ.get('SUPABASE_MEDIA_BUCKET', 'django-media')
         ).strip()
 
+        # public=False: private bucket, reads are signed with the service-role key and no public URL exists
+        self.public = kwargs.get('public', True)
+
         self.base_url = f"{self.supabase_url}/storage/v1"
+
+    def _read_headers(self):
+        return {} if self.public else {'Authorization': f'Bearer {self.service_role_key}', 'apikey': self.service_role_key}
 
     def _normalize_name(self, name):
         """Normalize name to forward slashes without leading slashes."""
@@ -109,7 +115,7 @@ class SupabaseStorage(Storage):
     def _open(self, name, mode='rb'):
         clean_name = self._normalize_name(name)
         url = self.url(clean_name)
-        req = urllib.request.Request(url)
+        req = urllib.request.Request(url, headers=self._read_headers())
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 return ContentFile(r.read(), name=clean_name)
@@ -121,7 +127,7 @@ class SupabaseStorage(Storage):
         if not self.supabase_url:
             return False
         url = self.url(clean_name)
-        req = urllib.request.Request(url, method='HEAD')
+        req = urllib.request.Request(url, method='HEAD', headers=self._read_headers())
         try:
             with urllib.request.urlopen(req, timeout=10) as r:
                 return r.status == 200
@@ -137,7 +143,7 @@ class SupabaseStorage(Storage):
         if not self.supabase_url:
             return 0
         url = self.url(clean_name)
-        req = urllib.request.Request(url, method='HEAD')
+        req = urllib.request.Request(url, method='HEAD', headers=self._read_headers())
         try:
             with urllib.request.urlopen(req, timeout=10) as r:
                 length = r.headers.get('Content-Length')
@@ -174,4 +180,5 @@ class SupabaseStorage(Storage):
         """
         clean_name = self._normalize_name(name)
         encoded_path = '/'.join(urllib.parse.quote(part) for part in clean_name.split('/'))
-        return f"{self.base_url}/object/public/{urllib.parse.quote(self.bucket)}/{encoded_path}"
+        access = 'public' if self.public else 'authenticated'
+        return f"{self.base_url}/object/{access}/{urllib.parse.quote(self.bucket)}/{encoded_path}"

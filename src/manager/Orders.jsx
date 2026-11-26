@@ -1,23 +1,25 @@
 import { useMemo, useState } from 'react'
 import { METHODS, STATUSES, today } from './data.js'
-import { figures, inRange, money } from './accounting.js'
+import { figures, inRange, money, orderTotal } from './accounting.js'
 import { Empty, Field, Filters, Modal, Status, useConfirm } from './ui.jsx'
 import { TxnForm, TYPES } from './Transactions.jsx'
 
 const NEW = '__new'
 
 function OrderForm({ state, dispatch, order, fig, onDone }) {
-  const [f, setF] = useState(order || { customerId: state.customers[0]?.id || NEW, desc: '', design: '', print: '', vendorId: '', cost: '', status: STATUSES[0], date: today() })
+  const [f, setF] = useState(order || { customerId: state.customers[0]?.id || NEW, desc: '', design: '', print: '', discount: '', vendorId: '', cost: '', status: STATUSES[0], date: today() })
   const [nc, setNc] = useState({ name: '', phone: '', address: '' })
   const [adv, setAdv] = useState({ amount: '', method: METHODS[0] })
   const [err, setErr] = useState('')
   const set = (e) => setF({ ...f, [e.target.name]: e.target.value })
   const locked = order && fig.vendorPaid > 0 // vendor already paid for this order: don't reassign
+  const billed = !!order?.receipt // receipt issued: charges are final
 
   const submit = (e) => {
     e.preventDefault()
-    const row = { ...f, design: Number(f.design), print: Number(f.print || 0), cost: Number(f.cost || 0) }
-    const total = row.design + row.print
+    const row = { ...f, design: Number(f.design), print: Number(f.print || 0), discount: Number(f.discount || 0), cost: Number(f.cost || 0) }
+    const total = orderTotal(row)
+    if (total < 0) return setErr('Discount is more than the design and printing charges.')
     if (row.cost > 0 && !row.vendorId) return setErr('Choose the printing vendor for this printing cost.')
     if (order && total < fig.paid) return setErr(`Total can't be below ${money(fig.paid)} already received.`)
     if (order && row.cost < fig.vendorPaid) return setErr(`Printing cost can't be below ${money(fig.vendorPaid)} already paid to the vendor.`)
@@ -26,7 +28,7 @@ function OrderForm({ state, dispatch, order, fig, onDone }) {
     else dispatch({ type: 'addOrder', order: row, customer: f.customerId === NEW ? { ...nc } : null, advance: { amount: Number(adv.amount || 0), method: adv.method } })
     onDone()
   }
-  const total = Number(f.design || 0) + Number(f.print || 0)
+  const total = orderTotal({ design: Number(f.design || 0), print: Number(f.print || 0), discount: Number(f.discount || 0) })
 
   return (
     <form className="mg-form" onSubmit={submit}>
@@ -48,10 +50,13 @@ function OrderForm({ state, dispatch, order, fig, onDone }) {
       )}
       <Field label="Order description"><input name="desc" value={f.desc} onChange={set} required placeholder="e.g. Flex banner 10×3 ft" /></Field>
       <div className="mg-row">
-        <Field label="Design charges (₹)"><input name="design" type="number" min="0" value={f.design} onChange={set} required /></Field>
-        <Field label="Printing charges (₹)"><input name="print" type="number" min="0" value={f.print} onChange={set} placeholder="0" /></Field>
+        <Field label="Design charges (₹)"><input name="design" type="number" min="0" value={f.design} onChange={set} required disabled={billed} /></Field>
+        <Field label="Printing charges (₹)"><input name="print" type="number" min="0" value={f.print} onChange={set} placeholder="0" disabled={billed} /></Field>
       </div>
-      <p className="mg-hint">Quotation total: <b>{money(total)}</b></p>
+      <div className="mg-row">
+        <Field label="Discount (₹)"><input name="discount" type="number" min="0" value={f.discount} onChange={set} placeholder="0" disabled={billed} /></Field>
+        <p className="mg-hint">Quotation total: <b>{money(total)}</b>{billed && <><br />Receipt {order.receipt} issued, charges are final.</>}</p>
+      </div>
       <div className="mg-row">
         <Field label="Printing vendor"><select name="vendorId" value={f.vendorId} onChange={set} disabled={locked}><option value="">None / not assigned</option>{state.vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}</select></Field>
         <Field label="Vendor printing cost (₹)"><input name="cost" type="number" min="0" value={f.cost} onChange={set} placeholder="0" /></Field>
@@ -72,30 +77,38 @@ function OrderForm({ state, dispatch, order, fig, onDone }) {
   )
 }
 
-function Detail({ state, id, onClose, pay }) {
+function Detail({ state, dispatch, id, onClose, pay }) {
+  const [busy, setBusy] = useState('')
   const o = state.orders.find((x) => x.id === id)
   const fig = figures(state).get(id)
   if (!o) return null
   const c = state.customers.find((x) => x.id === o.customerId)
   const v = state.vendors.find((x) => x.id === o.vendorId)
   const txs = state.transactions.filter((t) => t.orderId === id).sort((a, b) => a.date.localeCompare(b.date))
+  const act = async (label, a) => { setBusy(label); await dispatch(a); setBusy('') }
   return (
     <Modal title={`${o.id} · ${o.desc}`} onClose={onClose} wide>
       <div className="mg-kv">
         <div><small>Customer</small><b>{c?.name}</b><span>{c?.phone}</span></div>
         <div><small>Status</small><Status value={o.status} /></div>
-        <div><small>Quotation</small><b>{money(fig.total)}</b><span>Design {money(o.design)} + Printing {money(o.print)}</span></div>
+        <div><small>Quotation</small><b>{money(fig.total)}</b><span>Design {money(o.design)} + Printing {money(o.print)}{o.discount > 0 && ` − Discount ${money(o.discount)}`}</span></div>
         <div><small>Received / Balance</small><b>{money(fig.paid)} / {money(fig.balance)}</b></div>
+        <div><small>Payment</small><b>{o.paidAt ? 'Paid' : fig.balance > 0 ? 'Partly paid' : 'Not marked paid'}</b>{o.receipt && <span>Receipt {o.receipt}</span>}</div>
         <div><small>Vendor</small><b>{v?.name || '-'}</b><span>Cost {money(o.cost)} · Paid {money(fig.vendorPaid)} · Pending {money(fig.vendorDue)}</span></div>
       </div>
       <div className="mg-actions left">
         {fig.balance > 0 && <button className="mg-btn main" onClick={() => pay({ type: 'customer_payment', orderId: id })}>+ Customer payment</button>}
         {v && fig.vendorDue > 0 && <button className="mg-btn" onClick={() => pay({ type: 'vendor_payment', orderId: id })}>+ Pay vendor</button>}
+        {!o.paidAt && <button className="mg-btn" disabled={fig.balance > 0 || !!busy} onClick={() => act('paid', { type: 'markPaid', id })}>{busy === 'paid' ? 'Saving…' : 'Mark as paid'}</button>}
+        {o.receipt
+          ? <button className="mg-btn main" disabled={!!busy} onClick={() => act('bill', { type: 'receipt', id })}>{busy === 'bill' ? 'Downloading…' : `Download receipt ${o.receipt}`}</button>
+          : <button className={`mg-btn${o.paidAt ? ' main' : ''}`} disabled={!o.paidAt || !!busy} onClick={() => act('bill', { type: 'receipt', id, create: true })}>{busy === 'bill' ? 'Generating…' : 'Generate bill (PDF)'}</button>}
       </div>
+      {!o.paidAt && <p className="mg-hint">{fig.balance > 0 ? `Record the remaining ${money(fig.balance)} first. ` : ''}Once the full amount is received, Mark as paid to enable the bill.</p>}
       <h3 className="mg-sub">Payment history</h3>
       <div className="mg-table">
-        <table><thead><tr><th>Date</th><th>Type</th><th>Method</th><th>Note</th><th className="num">Amount</th></tr></thead>
-          <tbody>{txs.map((t) => <tr key={t.id}><td>{t.date}</td><td>{TYPES[t.type]}</td><td>{t.method}</td><td>{t.note}</td><td className={`num ${t.type === 'customer_payment' ? 'in' : 'out'}`}>{money(t.amount)}</td></tr>)}</tbody></table>
+        <table><thead><tr><th>Date</th><th>Type</th><th>Method</th><th>Reference</th><th>Note</th><th className="num">Amount</th></tr></thead>
+          <tbody>{txs.map((t) => <tr key={t.id}><td>{t.date}</td><td>{TYPES[t.type]}</td><td>{t.method}</td><td>{t.reference || '-'}</td><td>{t.note}</td><td className={`num ${t.type === 'customer_payment' ? 'in' : 'out'}`}>{money(t.amount)}</td></tr>)}</tbody></table>
         {!txs.length && <Empty>No payments recorded yet.</Empty>}
       </div>
     </Modal>
@@ -163,7 +176,7 @@ export default function Orders({ state, dispatch }) {
         {!rows.length && <Empty>No orders match these filters.</Empty>}
       </div>
       {form && <Modal title={form.order ? `Edit ${form.order.id}` : 'New order'} onClose={() => setForm(null)}><OrderForm state={state} dispatch={dispatch} order={form.order} fig={form.order && fig.get(form.order.id)} onDone={() => setForm(null)} /></Modal>}
-      {view && <Detail state={state} id={view} onClose={() => setView(null)} pay={setPay} />}
+      {view && <Detail state={state} dispatch={dispatch} id={view} onClose={() => setView(null)} pay={setPay} />}
       {pay && <Modal title={TYPES[pay.type]} onClose={() => setPay(null)}><TxnForm state={state} dispatch={dispatch} initial={pay} onDone={() => setPay(null)} /></Modal>}
       {confirm}
     </>
