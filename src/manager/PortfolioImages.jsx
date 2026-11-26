@@ -12,7 +12,7 @@ function validateFile(file) {
   if (!ACCEPTED_TYPES.includes(file.type)) return 'Choose a JPEG, PNG, WebP or GIF image.'
   if (file.size > MAX_FILE_SIZE) return 'Images must be 10 MB or smaller.'
   return ''
-}
+} 
 
 function safeFilename(filename) {
   return filename.normalize('NFKD')
